@@ -2,14 +2,13 @@
 const FREE_SHIPPING = 100;
 const SHIPPING_COST = 5.9;
 const CART_KEY = "drope-cart";
-const CAT_LABELS = { hauts: "Hauts", bas: "Bas", accessoires: "Accessoires" };
 
 const $ = (sel) => document.querySelector(sel);
 const euro = new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" });
 const fmt = (n) => euro.format(n).replace(",00", "");
 
 // ---------- Silhouettes SVG (viewBox 200x200) ----------
-// Pas de photos dans le proto : chaque type de vêtement est dessiné et recoloré à la volée.
+// Pas de photos dans le proto : le pull est dessiné et recoloré à la volée.
 function shade(hex, amt) {
   const n = parseInt(hex.slice(1), 16);
   const ch = (s) => Math.max(0, Math.min(255, Math.round(((n >> s) & 255) * (1 - amt))));
@@ -17,50 +16,10 @@ function shade(hex, amt) {
 }
 
 const SHAPES = {
-  tee: (c, d) => `
-    <path d="M68 32 L42 42 L14 72 L36 96 L54 84 L54 176 L146 176 L146 84 L164 96 L186 72 L158 42 L132 32 C124 46 76 46 68 32 Z" fill="${c}" stroke="${d}" stroke-width="2" stroke-linejoin="round"/>
-    <path d="M68 32 C76 46 124 46 132 32" fill="none" stroke="${d}" stroke-width="5"/>
-    <path d="M36 96 L54 84 M164 96 L146 84" stroke="${d}" stroke-width="2"/>`,
   sweat: (c, d) => `
     <path d="M68 32 L44 40 L22 120 L20 168 L42 170 L50 124 L56 96 L56 176 L144 176 L144 96 L150 124 L158 170 L180 168 L178 120 L156 40 L132 32 C124 46 76 46 68 32 Z" fill="${c}" stroke="${d}" stroke-width="2" stroke-linejoin="round"/>
     <path d="M68 32 C76 46 124 46 132 32" fill="none" stroke="${d}" stroke-width="6"/>
     <path d="M21 158 L43 160 M179 158 L157 160 M56 164 L144 164" stroke="${d}" stroke-width="2"/>`,
-  hoodie: (c, d) => `
-    <path d="M70 36 C62 4 138 4 130 36 C120 52 80 52 70 36 Z" fill="${d}" stroke="${d}" stroke-width="2"/>
-    <path d="M68 32 L44 40 L22 120 L20 168 L42 170 L50 124 L56 96 L56 176 L144 176 L144 96 L150 124 L158 170 L180 168 L178 120 L156 40 L132 32 C124 50 76 50 68 32 Z" fill="${c}" stroke="${d}" stroke-width="2" stroke-linejoin="round"/>
-    <path d="M74 128 L126 128 L134 158 L66 158 Z" fill="none" stroke="${d}" stroke-width="2"/>
-    <path d="M90 46 L88 78 M110 46 L112 78" stroke="${d}" stroke-width="2.5" stroke-linecap="round"/>
-    <path d="M21 158 L43 160 M179 158 L157 160 M56 166 L144 166" stroke="${d}" stroke-width="2"/>`,
-  jacket: (c, d) => `
-    <path d="M68 32 L44 40 L22 120 L20 168 L42 170 L50 124 L56 96 L56 176 L144 176 L144 96 L150 124 L158 170 L180 168 L178 120 L156 40 L132 32 L100 44 Z" fill="${c}" stroke="${d}" stroke-width="2" stroke-linejoin="round"/>
-    <path d="M68 32 L82 58 L100 44 L118 58 L132 32" fill="${d}" stroke="${d}" stroke-width="2" stroke-linejoin="round"/>
-    <path d="M100 44 L100 176" stroke="${d}" stroke-width="3"/>
-    <rect x="66" y="112" width="24" height="26" rx="3" fill="none" stroke="${d}" stroke-width="2"/>
-    <rect x="110" y="112" width="24" height="26" rx="3" fill="none" stroke="${d}" stroke-width="2"/>`,
-  pants: (c, d) => `
-    <path d="M58 18 L142 18 L150 182 L110 182 L100 74 L90 182 L50 182 Z" fill="${c}" stroke="${d}" stroke-width="2" stroke-linejoin="round"/>
-    <path d="M58 30 L142 30" stroke="${d}" stroke-width="3"/>
-    <path d="M100 30 L100 70" stroke="${d}" stroke-width="2"/>
-    <rect x="57" y="100" width="22" height="30" rx="3" fill="none" stroke="${d}" stroke-width="2"/>
-    <rect x="121" y="100" width="22" height="30" rx="3" fill="none" stroke="${d}" stroke-width="2"/>`,
-  shorts: (c, d) => `
-    <path d="M54 48 L146 48 L156 138 L110 144 L100 92 L90 144 L44 138 Z" fill="${c}" stroke="${d}" stroke-width="2" stroke-linejoin="round"/>
-    <path d="M54 60 L146 60" stroke="${d}" stroke-width="3"/>
-    <path d="M70 66 C66 84 62 90 52 92 M130 66 C134 84 138 90 148 92" fill="none" stroke="${d}" stroke-width="2"/>`,
-  cap: (c, d) => `
-    <path d="M40 128 L160 128 C188 130 192 148 170 150 L40 140 Z" fill="${d}" stroke="${d}" stroke-width="2" stroke-linejoin="round"/>
-    <path d="M44 128 C44 62 156 62 156 128 Z" fill="${c}" stroke="${d}" stroke-width="2"/>
-    <path d="M100 68 L100 128 M72 76 C66 96 66 112 68 128 M128 76 C134 96 134 112 132 128" fill="none" stroke="${d}" stroke-width="1.5"/>
-    <circle cx="100" cy="66" r="5" fill="${d}"/>`,
-  beanie: (c, d) => `
-    <circle cx="100" cy="40" r="16" fill="${c}" stroke="${d}" stroke-width="2"/>
-    <path d="M54 130 L54 98 C54 46 146 46 146 98 L146 130 Z" fill="${c}" stroke="${d}" stroke-width="2"/>
-    <rect x="48" y="120" width="104" height="44" rx="6" fill="${c}" stroke="${d}" stroke-width="2"/>
-    <path d="M62 124 V160 M76 124 V160 M90 124 V160 M104 124 V160 M118 124 V160 M132 124 V160 M146 124 V160" stroke="${d}" stroke-width="1.5" opacity=".7"/>`,
-  tote: (c, d) => `
-    <path d="M72 76 C72 18 128 18 128 76" fill="none" stroke="${d}" stroke-width="7"/>
-    <path d="M46 74 L154 74 L162 184 L38 184 Z" fill="${c}" stroke="${d}" stroke-width="2" stroke-linejoin="round"/>
-    <text x="100" y="140" text-anchor="middle" font-family="Archivo Black, Impact, sans-serif" font-size="22" fill="${d}">DROPE</text>`,
 };
 
 function garment(type, hex) {
@@ -78,7 +37,6 @@ function saveCart() {
 
 // ---------- State ----------
 let cart = loadCart().filter((l) => PRODUCTS.some((p) => p.id === l.id));
-let filter = "all";
 let sortBy = "featured";
 let current = null; // { product, colorIdx, size }
 
@@ -86,7 +44,7 @@ const byId = (id) => PRODUCTS.find((p) => p.id === id);
 
 // ---------- Grille produits ----------
 function renderGrid() {
-  let list = PRODUCTS.filter((p) => filter === "all" || p.cat === filter);
+  let list = PRODUCTS;
   if (sortBy === "price-asc") list = [...list].sort((a, b) => a.price - b.price);
   if (sortBy === "price-desc") list = [...list].sort((a, b) => b.price - a.price);
   if (sortBy === "name") list = [...list].sort((a, b) => a.name.localeCompare(b.name, "fr"));
@@ -123,23 +81,13 @@ $("#grid").addEventListener("click", (e) => {
   if (card) openProduct(card.dataset.id);
 });
 
-function setFilter(cat) {
-  filter = cat;
-  document.querySelectorAll(".chip").forEach((c) => c.classList.toggle("active", c.dataset.cat === cat));
-  renderGrid();
-}
-$("#chips").addEventListener("click", (e) => {
-  const chip = e.target.closest(".chip");
-  if (chip) setFilter(chip.dataset.cat);
-});
-document.querySelectorAll("[data-nav]").forEach((a) => a.addEventListener("click", () => setFilter(a.dataset.nav)));
 $("#sort").addEventListener("change", (e) => { sortBy = e.target.value; renderGrid(); });
 
 // ---------- Fiche produit ----------
 function openProduct(id) {
   const p = byId(id);
   current = { product: p, colorIdx: 0, size: p.sizes.length === 1 ? p.sizes[0] : null, perso: null };
-  $("#pmCat").textContent = CAT_LABELS[p.cat];
+  $("#pmCat").textContent = "Pull · personnalisable en 3D";
   $("#pmName").textContent = p.name;
   $("#pmPrice").textContent = fmt(p.price);
   $("#pmDesc").textContent = p.desc;
@@ -407,7 +355,7 @@ function tick() {
 }
 
 // ---------- Init ----------
-$("#heroVisual").innerHTML = garment("hoodie", "#e4572e");
+$("#heroVisual").innerHTML = garment("sweat", "#2b4fd6");
 renderGrid();
 renderCart();
 tick();
